@@ -30,6 +30,7 @@ import android.hardware.SensorManager;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraAccessException;
+import android.media.AudioManager;
 import android.media.session.MediaSessionLegacyHelper;
 import android.net.Uri;
 import android.os.Handler;
@@ -40,9 +41,11 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.os.SystemProperties;
 import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.service.notification.ZenModeConfig;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.WindowManagerGlobal;
@@ -68,6 +71,14 @@ public class KeyHandler implements DeviceKeyHandler {
     private static final int GESTURE_V_SCANCODE = 252;
     private static final int GESTURE_LTR_SCANCODE = 253;
     private static final int GESTURE_GTR_SCANCODE = 254;
+    private static final int MODE_TOTAL_SILENCE = 600;
+    private static final int MODE_ALARMS_ONLY = 601;
+    private static final int MODE_PRIORITY_ONLY = 602;
+    private static final int MODE_NONE = 603;
+    private static final int MODE_VIBRATE = 604;
+    private static final int MODE_RING = 605;
+
+    private static final String PROP_IGNORE_AUTO = "persist.op.slider_ignore_auto";
 
     private static final int GESTURE_WAKELOCK_DURATION = 3000;
 
@@ -83,6 +94,22 @@ public class KeyHandler implements DeviceKeyHandler {
     private final Context mContext;
     private final PowerManager mPowerManager;
     private KeyguardManager mKeyguardManager;
+
+    private static final SparseIntArray sSupportedSliderModes = new SparseIntArray();
+    static {
+        sSupportedSliderModes.put(MODE_TOTAL_SILENCE, Settings.Global.ZEN_MODE_NO_INTERRUPTIONS);
+        sSupportedSliderModes.put(MODE_ALARMS_ONLY, Settings.Global.ZEN_MODE_ALARMS);
+        sSupportedSliderModes.put(MODE_PRIORITY_ONLY,
+                Settings.Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS);
+        sSupportedSliderModes.put(MODE_NONE, Settings.Global.ZEN_MODE_OFF);
+        sSupportedSliderModes.put(MODE_VIBRATE, AudioManager.RINGER_MODE_VIBRATE);
+        sSupportedSliderModes.put(MODE_RING, AudioManager.RINGER_MODE_NORMAL);
+    }
+
+    private final Context mContext;
+    private final PowerManager mPowerManager;
+    private final AudioManager mAudioManager;
+    private final NotificationManager mNotificationManager;
     private EventHandler mEventHandler;
     private SensorManager mSensorManager;
     private CameraManager mCameraManager;
@@ -98,6 +125,9 @@ public class KeyHandler implements DeviceKeyHandler {
     public KeyHandler(Context context) {
         mContext = context;
         mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        mNotificationManager
+                = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mEventHandler = new EventHandler();
         mGestureWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "GestureWakeLock");
@@ -234,6 +264,34 @@ public class KeyHandler implements DeviceKeyHandler {
 
         if (!mEventHandler.hasMessages(GESTURE_REQUEST)) {
             Message msg = getMessageForKeyEvent(event.getScanCode());
+
+        if (isSliderModeSupported) {
+            boolean ignoreAuto = SystemProperties.get(PROP_IGNORE_AUTO).equals("true");
+            boolean isAutoModeActive = false;
+
+            if (ignoreAuto) {
+                ZenModeConfig zmc = mNotificationManager.getZenModeConfig();
+                int len = zmc.automaticRules.size();
+                for (int i = 0; i < len; i++) {
+                    if (zmc.automaticRules.valueAt(i).isAutomaticActive()) {
+                        isAutoModeActive = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!isAutoModeActive) {
+                if (scanCode <= MODE_NONE) {
+                    mNotificationManager.setZenMode(sSupportedSliderModes.get(scanCode), null, TAG);
+                } else {
+                    mAudioManager.setRingerModeInternal(sSupportedSliderModes.get(scanCode));
+                }
+
+                doHapticFeedback();
+            }
+        } else if (!mEventHandler.hasMessages(GESTURE_REQUEST)) {
+            Message msg = getMessageForKeyEvent(scanCode);
+
             boolean defaultProximity = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_proximityCheckOnWakeEnabledByDefault);
             boolean proximityWakeCheckEnabled = Settings.System.getInt(mContext.getContentResolver(),
