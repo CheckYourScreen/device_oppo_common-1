@@ -107,6 +107,7 @@ public class KeyHandler implements DeviceKeyHandler {
     private final Context mContext;
     private final PowerManager mPowerManager;
     private final AudioManager mAudioManager;
+    private KeyguardManager mKeyguardManager;
     private final NotificationManager mNotificationManager;
     private EventHandler mEventHandler;
     private SensorManager mSensorManager;
@@ -299,6 +300,7 @@ public class KeyHandler implements DeviceKeyHandler {
                 processEvent(event.getScanCode());
             } else {
                 mEventHandler.sendMessage(msg);
+            }
             }
         }
         return true;
