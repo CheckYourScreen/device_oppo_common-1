@@ -18,6 +18,7 @@ package com.cyanogenmod.settings.device;
 
 import android.app.ActivityManagerNative;
 import android.app.KeyguardManager;
+import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -47,6 +48,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.service.notification.ZenModeConfig;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.KeyEvent;
 import android.view.WindowManagerGlobal;
 
@@ -90,10 +92,6 @@ public class KeyHandler implements DeviceKeyHandler {
         GESTURE_LTR_SCANCODE,
         GESTURE_GTR_SCANCODE
     };
-
-    private final Context mContext;
-    private final PowerManager mPowerManager;
-    private KeyguardManager mKeyguardManager;
 
     private static final SparseIntArray sSupportedSliderModes = new SparseIntArray();
     static {
