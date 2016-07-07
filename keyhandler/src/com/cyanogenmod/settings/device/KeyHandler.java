@@ -93,6 +93,11 @@ public class KeyHandler implements DeviceKeyHandler {
         GESTURE_GTR_SCANCODE
     };
 
+
+    private final Context mContext;
+    private final PowerManager mPowerManager;
+    private KeyguardManager mKeyguardManager;
+
     private static final SparseIntArray sSupportedSliderModes = new SparseIntArray();
     static {
         sSupportedSliderModes.put(MODE_TOTAL_SILENCE, Settings.Global.ZEN_MODE_NO_INTERRUPTIONS);
@@ -104,10 +109,7 @@ public class KeyHandler implements DeviceKeyHandler {
         sSupportedSliderModes.put(MODE_RING, AudioManager.RINGER_MODE_NORMAL);
     }
 
-    private final Context mContext;
-    private final PowerManager mPowerManager;
     private final AudioManager mAudioManager;
-    private KeyguardManager mKeyguardManager;
     private final NotificationManager mNotificationManager;
     private EventHandler mEventHandler;
     private SensorManager mSensorManager;
@@ -247,8 +249,10 @@ public class KeyHandler implements DeviceKeyHandler {
     }
 
     public boolean handleKeyEvent(KeyEvent event) {
-        boolean isKeySupported = ArrayUtils.contains(sSupportedGestures, event.getScanCode());
-        if (!isKeySupported) {
+        int scanCode = event.getScanCode();
+        boolean isKeySupported = ArrayUtils.contains(sSupportedGestures, scanCode);
+        boolean isSliderModeSupported = sSupportedSliderModes.indexOfKey(scanCode) >= 0;
+        if (!isKeySupported && !isSliderModeSupported) {
             return false;
         }
 
@@ -263,7 +267,6 @@ public class KeyHandler implements DeviceKeyHandler {
 
         if (!mEventHandler.hasMessages(GESTURE_REQUEST)) {
             Message msg = getMessageForKeyEvent(event.getScanCode());
-
         if (isSliderModeSupported) {
             boolean ignoreAuto = SystemProperties.get(PROP_IGNORE_AUTO).equals("true");
             boolean isAutoModeActive = false;
@@ -289,8 +292,6 @@ public class KeyHandler implements DeviceKeyHandler {
                 doHapticFeedback();
             }
         } else if (!mEventHandler.hasMessages(GESTURE_REQUEST)) {
-            Message msg = getMessageForKeyEvent(scanCode);
-
             boolean defaultProximity = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_proximityCheckOnWakeEnabledByDefault);
             boolean proximityWakeCheckEnabled = Settings.System.getInt(mContext.getContentResolver(),
@@ -301,8 +302,8 @@ public class KeyHandler implements DeviceKeyHandler {
             } else {
                 mEventHandler.sendMessage(msg);
             }
-            }
-        }
+        } 
+    }
         return true;
     }
 
