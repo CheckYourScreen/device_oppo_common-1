@@ -23,7 +23,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ServiceManager;
 import android.preference.Preference;
-import android.service.gesture.IGestureService;
+/* import android.service.gesture.IGestureService; */
 
 public class GesturePadSettings extends NodePreferenceActivity {
 
@@ -42,13 +42,13 @@ public class GesturePadSettings extends NodePreferenceActivity {
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         if (preference.getKey().equals(Constants.TOUCHPAD_DOUBLETAP_KEY)) {
             IBinder b = ServiceManager.getService("gesture");
-            IGestureService sInstance = IGestureService.Stub.asInterface(b);
-            Startup.toggleDoubleTap(this, sInstance, (Boolean) newValue);
+            /*IGestureService sInstance = IGestureService.Stub.asInterface(b); */
+           /* Startup.toggleDoubleTap(this, sInstance, (Boolean) newValue);*/
             return true;
         } else if (preference.getKey().equals(Constants.TOUCHPAD_LONGPRESS_KEY)) {
             IBinder b = ServiceManager.getService("gesture");
-            IGestureService sInstance = IGestureService.Stub.asInterface(b);
-            Startup.toggleLongPress(this, sInstance, (Boolean) newValue);
+           /* IGestureService sInstance = IGestureService.Stub.asInterface(b);*/
+           /* Startup.toggleLongPress(this, sInstance, (Boolean) newValue); */
             return true;
         }
         return super.onPreferenceChange(preference, newValue);

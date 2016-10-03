@@ -33,7 +33,7 @@ import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.preference.PreferenceManager;
-import android.service.gesture.IGestureService;
+/*import android.service.gesture.IGestureService; */
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.InputEvent;
@@ -68,14 +68,13 @@ public class Startup extends BroadcastReceiver {
                 }
             }
 
-            // Disable backtouch settings if needed
+         /*   // Disable backtouch settings if needed
             if (!context.getResources().getBoolean(
                         com.android.internal.R.bool.config_enableGestureService)) {
                 disableComponent(context, GesturePadSettings.class.getName());
             } else {
                 IBinder b = ServiceManager.getService("gesture");
-                IGestureService sInstance = IGestureService.Stub.asInterface(b);
-
+                IGestureService sInstance = IGestureService.Stub.asInterface(b);*/
                 // Set longPress event
                 toggleLongPress(context, sInstance, Constants.isPreferenceEnabled(
                         context, Constants.TOUCHPAD_LONGPRESS_KEY));
@@ -131,7 +130,7 @@ public class Startup extends BroadcastReceiver {
         }
     }
 
-    public static void toggleDoubleTap(Context context, IGestureService gestureService,
+/*    public static void toggleDoubleTap(Context context, IGestureService gestureService,
             boolean enable) {
         PendingIntent pendingIntent = null;
         if (enable) {
@@ -145,9 +144,9 @@ public class Startup extends BroadcastReceiver {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-    }
+    } */
 
-    public static void toggleLongPress(Context context, IGestureService gestureService,
+/*    public static void toggleLongPress(Context context, IGestureService gestureService,
             boolean enable) {
         PendingIntent pendingIntent = null;
         if (enable) {
@@ -161,7 +160,7 @@ public class Startup extends BroadcastReceiver {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-    }
+    } */
 
     private void sendInputEvent(InputEvent event) {
         InputManager inputManager = InputManager.getInstance();
